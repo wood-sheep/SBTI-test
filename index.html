@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SBTI 人格测试</title>
+  <title>SBTI 人格测试最终增强版</title>
   <style>
     :root {
       --bg: #f6faf6;
@@ -681,9 +681,88 @@
       .dim-grid,
       .score-grid { grid-template-columns: 1fr; }
     }
+
+    .ad-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.ad-modal.show{
+  display:flex;
+}
+
+.ad-box{
+  width:min(92%,520px);
+  background:#fff;
+  border-radius:22px;
+  padding:24px;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  animation:pop .25s ease;
+}
+
+@keyframes pop{
+  from{transform:scale(.92);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+.ad-title{
+  font-size:22px;
+  font-weight:800;
+  color:var(--accent-strong);
+  margin-bottom:14px;
+}
+
+.ad-list{
+  display:grid;
+  gap:10px;
+  color:#304034;
+  line-height:1.7;
+  font-size:15px;
+}
+
+.ad-site{
+  margin-top:14px;
+  padding:12px;
+  background:var(--soft);
+  border-radius:14px;
+  font-weight:700;
+  color:var(--accent-strong);
+}
+
+.ad-actions{
+  margin-top:18px;
+  display:flex;
+  justify-content:flex-end;
+}
+
+.ad-btn{
+  background:var(--accent-strong);
+  color:#fff;
+  border:0;
+  padding:12px 18px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:700;
+}
   </style>
 </head>
 <body>
+  <div id="loadingModal" class="ad-modal">
+  <div class="ad-box">
+    <div class="ad-title" id="loadingTitle">加载中，请稍候...</div>
+    <div class="ad-list">
+      <div class="progress" style="height: 8px; border-radius: 4px;">
+        <span id="loadingBar"></span>
+      </div>
+    </div>
+  </div>
+</div>
   <div class="shell">
     <section id="intro" class="screen active">
       <div class="hero card hero-minimal">
@@ -691,40 +770,6 @@
         <div class="hero-actions hero-actions-single">
           <button id="startBtn" class="btn-primary">开始测试</button>
         </div>
-        <div style="margin-top: 2rem; display: flex; flex-direction: column;">
-          <div>
-            原作者：<a href="https://www.bilibili.com/video/BV1LpDHByET6/" rel="noopener noreferrer" target="_blank">
-              B站@Q肉儿串儿
-            </a>
-          </div>
-          <div style="margin-top: 1rem; font-size: 0.875rem">
-            B站已发布经作者认证的进一步优化版本，可以
-            <a href="https://www.bilibili.com/blackboard/era/WijKT2bWuCJWPg8B.html" rel="noopener noreferrer">点击此处前往 </a>
-          </div>
-        </div>
-        <details>
-          <summary style="margin-top: 1rem; font-size: 0.75rem; color: gray; cursor: pointer;">关于本镜像</summary>
-          <div style="color: gray; padding-top: 0.5rem; font-size: 0.75rem;">
-            <div style="margin: 0.5rem;">
-              原作者认可评论区的镜像地址，其实是一件蛮高风险的事情（别人完全可能会添加引流内容或恶意代码），但原作者愿意信任我，我也应当回报这份信任，以下为网站声明：
-            </div>
-            <div style="margin: 0.5rem;">
-              本镜像(sbti.unun.dev)除该页面声明和图片拆分以优化加载外，<br>未作任何其它修改，地址直到过期都不会挪作他用，可以放心使用。
-            </div>
-            <div>
-              原作者并未开源，但仅因网页自身即为全部源码，出于存档目的，你可以在
-              <a href="https://github.com/UnluckyNinja/SBTI-test" rel="noopener" target="_blank">
-                此处
-              </a>
-              查看。
-            </div>
-          </div>
-          <div style="margin: 1rem; font-size:0.5rem; color: #80808080">
-            网站从4月10日中午开始，境内逐渐无法访问。
-            网站自身一切正常，不是流量问题，纯前端网站没有后端，而Cloudflare也是经历过大风大浪的。
-            本站不企图去避开绕过，这只会将情况变得更糟。相信大家都能八仙过海各显神通。
-          </div>
-        </details>
       </div>
     </section>
 
@@ -1764,6 +1809,113 @@
     document.getElementById('restartBtn').addEventListener('click', () => startTest(false));
     document.getElementById('toTopBtn').addEventListener('click', () => showScreen('intro'));
   </script>
+<script>
+function showAd(){
+  document.getElementById("adModal").classList.add("show");
+}
 
+function closeAd(){
+  document.getElementById("adModal").classList.remove("show");
+}
+
+/* 开始测试弹一次 */
+document.getElementById("startBtn").addEventListener("click",()=>{
+  setTimeout(showAd,300);
+});
+
+/* 提交结果弹一次 */
+document.getElementById("submitBtn").addEventListener("click",()=>{
+  setTimeout(showAd,600);
+});
+
+/* 结果页底部广告 */
+window.addEventListener("load",()=>{
+  const box=document.querySelector(".result-actions");
+
+  const ad=document.createElement("div");
+  ad.className="card";
+  ad.style.marginTop="18px";
+  ad.style.padding="18px";
+  ad.innerHTML=`
+    <div style="font-size:18px;font-weight:800;color:#4d6a53;margin-bottom:10px;">
+      🔥 ChatGPT 福利专区
+    </div>
+    <div style="line-height:1.9;color:#304034;">
+      ChatGPT Plus 企业内部渠道 20/月<br>
+      Plus共享号 23元<br>
+      GPT Plus 一年200<br>
+      5x Pro 月卡200 ｜ 20x Pro 月卡279<br>
+      Gork / Gemini 紧缺资源
+    </div>
+    <div style="margin-top:10px;font-weight:700;color:#4d6a53;">
+      www.apple.shbs.club
+    </div>
+  `;
+
+  box.parentNode.appendChild(ad);
+});
+
+const loadingModal = document.getElementById('loadingModal');
+const loadingBar = document.getElementById('loadingBar');
+
+function showLoading(duration = 5000, callback) {
+  loadingModal.classList.add('show');
+  loadingBar.style.width = '0%';
+
+  let start = null;
+  function animate(time) {
+    if (!start) start = time;
+    let progress = (time - start) / duration;
+    if (progress > 1) progress = 1;
+    loadingBar.style.width = (progress * 100) + '%';
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      loadingModal.classList.remove('show');
+      if (callback) callback();
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+// 开始答题按钮
+document.getElementById('startBtn').addEventListener('click', () => {
+  showLoading(5000, () => {
+    document.getElementById('intro').classList.remove('active');
+    document.getElementById('test').classList.add('active');
+  });
+});
+
+// 提交按钮
+document.getElementById('submitBtn').addEventListener('click', () => {
+  showLoading(5000, () => {
+    document.getElementById('test').classList.remove('active');
+    document.getElementById('result').classList.add('active');
+  });
+});
+</script>
+
+<div class="ad-modal" id="adModal">
+  <div class="ad-box">
+    <div class="ad-title">🔥 ChatGPT 账号福利</div>
+
+    <div class="ad-list">
+      <div>ChatGPT Plus【企业内部渠道】20元/月</div>
+      <div>Plus 独享账号全功能共享 23元/号</div>
+      <div>个人账号充值 GPT Plus 一年仅 200</div>
+      <div>5x Pro 月卡 200</div>
+      <div>20x Pro 月卡 279</div>
+      <div>另有 Gork / Gemini 紧缺资源</div>
+    </div>
+
+    <div class="ad-site">
+      网站：www.apple.shbs.club
+    </div>
+
+    <div class="ad-actions">
+      <button class="ad-btn" onclick="closeAd()">知道了</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
