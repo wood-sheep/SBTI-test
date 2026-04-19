@@ -750,19 +750,82 @@
   cursor:pointer;
   font-weight:700;
 }
+
+.notice-modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10000;
+}
+
+.notice-modal.show{
+  display:flex;
+}
+
+.notice-box{
+  width:min(92%,560px);
+  max-height:min(78vh,680px);
+  overflow:auto;
+  background:#fff;
+  border-radius:20px;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow);
+  padding:22px;
+}
+
+.notice-title{
+  margin:0;
+  font-size:22px;
+  font-weight:800;
+  color:var(--accent-strong);
+}
+
+.notice-text{
+  margin-top:10px;
+  color:#2b3b2f;
+  line-height:1.7;
+  font-size:14px;
+}
+
+.notice-list{
+  margin-top:14px;
+  display:grid;
+  gap:10px;
+}
+
+.notice-item{
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+  background:linear-gradient(180deg, #ffffff, #fbfdfb);
+}
+
+.notice-item-no{
+  font-size:12px;
+  font-weight:700;
+  color:var(--accent-strong);
+}
+
+.notice-item-text{
+  margin-top:4px;
+  font-size:13px;
+  line-height:1.6;
+  color:#304034;
+}
+
+.notice-actions{
+  margin-top:16px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
   </style>
 </head>
 <body>
-  <div id="loadingModal" class="ad-modal">
-  <div class="ad-box">
-    <div class="ad-title" id="loadingTitle">加载中，请稍候...</div>
-    <div class="ad-list">
-      <div class="progress" style="height: 8px; border-radius: 4px;">
-        <span id="loadingBar"></span>
-      </div>
-    </div>
-  </div>
-</div>
   <div class="shell">
     <section id="intro" class="screen active">
       <div class="hero card hero-minimal">
@@ -1583,6 +1646,13 @@
       return visible;
     }
 
+    function getIncompleteQuestions() {
+      const visibleQuestions = getVisibleQuestions();
+      return visibleQuestions
+        .map((q, idx) => ({ q, index: idx + 1 }))
+        .filter(item => app.answers[item.q.id] === undefined);
+    }
+
     function getQuestionMetaLabel(q) {
       if (q.special) return '补充题';
       return app.previewMode ? dimensionMeta[q.dim].name : '维度已隐藏';
@@ -1641,14 +1711,24 @@
       const visibleQuestions = getVisibleQuestions();
       const total = visibleQuestions.length;
       const done = visibleQuestions.filter(q => app.answers[q.id] !== undefined).length;
+      const incomplete = getIncompleteQuestions();
       const percent = total ? (done / total) * 100 : 0;
       progressBar.style.width = `${percent}%`;
       progressText.textContent = `${done} / ${total}`;
       const complete = done === total && total > 0;
-      submitBtn.disabled = !complete;
-      testHint.textContent = complete
-        ? '都做完了。现在可以把你的电子魂魄交给结果页审判。'
-        : '全选完才会放行。世界已经够乱了，起码把题做完整。';
+      submitBtn.disabled = false;
+      submitBtn.textContent = complete
+        ? '提交并查看结果'
+        : `提交并查看结果（剩 ${incomplete.length} 题）`;
+      if (complete) {
+        testHint.textContent = '都做完了。现在可以把你的电子魂魄交给结果页审判。';
+        return;
+      }
+
+      const missingNums = incomplete.map(item => item.index);
+      const preview = missingNums.slice(0, 8).join('、');
+      const suffix = missingNums.length > 8 ? ' 等题' : ' 题';
+      testHint.textContent = `还有 ${incomplete.length} 题未完成：第 ${preview}${suffix}`;
     }
 
     function sumToLevel(score) {
@@ -1803,97 +1883,10 @@
       showScreen('test');
     }
 
-    document.getElementById('startBtn').addEventListener('click', () => startTest(false));
     document.getElementById('backIntroBtn').addEventListener('click', () => showScreen('intro'));
-    document.getElementById('submitBtn').addEventListener('click', renderResult);
     document.getElementById('restartBtn').addEventListener('click', () => startTest(false));
     document.getElementById('toTopBtn').addEventListener('click', () => showScreen('intro'));
   </script>
-<script>
-function showAd(){
-  document.getElementById("adModal").classList.add("show");
-}
-
-function closeAd(){
-  document.getElementById("adModal").classList.remove("show");
-}
-
-/* 开始测试弹一次 */
-document.getElementById("startBtn").addEventListener("click",()=>{
-  setTimeout(showAd,300);
-});
-
-/* 提交结果弹一次 */
-document.getElementById("submitBtn").addEventListener("click",()=>{
-  setTimeout(showAd,600);
-});
-
-/* 结果页底部广告 */
-window.addEventListener("load",()=>{
-  const box=document.querySelector(".result-actions");
-
-  const ad=document.createElement("div");
-  ad.className="card";
-  ad.style.marginTop="18px";
-  ad.style.padding="18px";
-  ad.innerHTML=`
-    <div style="font-size:18px;font-weight:800;color:#4d6a53;margin-bottom:10px;">
-      🔥 ChatGPT 福利专区
-    </div>
-    <div style="line-height:1.9;color:#304034;">
-      ChatGPT Plus 企业内部渠道 20/月<br>
-      Plus共享号 23元<br>
-      GPT Plus 一年200<br>
-      5x Pro 月卡200 ｜ 20x Pro 月卡279<br>
-      Gork / Gemini 紧缺资源
-    </div>
-    <div style="margin-top:10px;font-weight:700;color:#4d6a53;">
-      www.apple.shbs.club
-    </div>
-  `;
-
-  box.parentNode.appendChild(ad);
-});
-
-const loadingModal = document.getElementById('loadingModal');
-const loadingBar = document.getElementById('loadingBar');
-
-function showLoading(duration = 5000, callback) {
-  loadingModal.classList.add('show');
-  loadingBar.style.width = '0%';
-
-  let start = null;
-  function animate(time) {
-    if (!start) start = time;
-    let progress = (time - start) / duration;
-    if (progress > 1) progress = 1;
-    loadingBar.style.width = (progress * 100) + '%';
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      loadingModal.classList.remove('show');
-      if (callback) callback();
-    }
-  }
-  requestAnimationFrame(animate);
-}
-
-// 开始答题按钮
-document.getElementById('startBtn').addEventListener('click', () => {
-  showLoading(5000, () => {
-    document.getElementById('intro').classList.remove('active');
-    document.getElementById('test').classList.add('active');
-  });
-});
-
-// 提交按钮
-document.getElementById('submitBtn').addEventListener('click', () => {
-  showLoading(5000, () => {
-    document.getElementById('test').classList.remove('active');
-    document.getElementById('result').classList.add('active');
-  });
-});
-</script>
 
 <div class="ad-modal" id="adModal">
   <div class="ad-box">
@@ -1909,13 +1902,223 @@ document.getElementById('submitBtn').addEventListener('click', () => {
     </div>
 
     <div class="ad-site">
-      网站：www.apple.shbs.club
+      网站：apple.shbs.club
     </div>
 
-    <div class="ad-actions">
-      <button class="ad-btn" onclick="closeAd()">知道了</button>
+    <div style="margin-top:16px;">
+      <div class="progress" style="height:8px;border-radius:999px;">
+        <span id="adProgressBar"></span>
+      </div>
+      <div id="adProgressStatus" style="margin-top:8px;color:var(--muted);font-size:13px;">
+        数据加载中...
+      </div>
+    </div>
+
+    <div class="ad-actions" style="justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <button id="adSkipBtn" class="btn-secondary" type="button" disabled>跳过</button>
+      <button id="adGoBtn" class="ad-btn" type="button">了解一下</button>
     </div>
   </div>
 </div>
+
+<div class="notice-modal" id="incompleteModal" aria-hidden="true">
+  <div class="notice-box" role="dialog" aria-modal="true" aria-labelledby="incompleteTitle">
+    <h3 class="notice-title" id="incompleteTitle">还有题目没完成</h3>
+    <div class="notice-text" id="incompleteSummary"></div>
+    <div class="notice-list" id="incompleteList"></div>
+    <div class="notice-actions">
+      <button id="incompleteCloseBtn" class="btn-secondary" type="button">知道了</button>
+      <button id="incompleteGoBtn" class="btn-primary" type="button">去补题</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SHOP_URL = "https://apple.shbs.club";
+  const AD_DURATION = 5000;
+
+  let adAfterAction = null;
+  let adFrame = null;
+  let pendingIncomplete = [];
+
+  function showAdWithProgress(afterAction, scene = "data") {
+    adAfterAction = afterAction;
+
+    const modal = document.getElementById("adModal");
+    const bar = document.getElementById("adProgressBar");
+    const status = document.getElementById("adProgressStatus");
+    const skipBtn = document.getElementById("adSkipBtn");
+    const goBtn = document.getElementById("adGoBtn");
+    const sceneTextMap = {
+      data: "数据加载中...",
+      bank: "题库加载中...",
+      result: "结果加载中..."
+    };
+    const loadingText = sceneTextMap[scene] || sceneTextMap.data;
+
+    cancelAnimationFrame(adFrame);
+    bar.style.width = "0%";
+    status.textContent = loadingText;
+    skipBtn.disabled = true;
+    goBtn.disabled = false;
+    goBtn.textContent = "了解一下";
+
+    modal.classList.add("show");
+
+    let start = null;
+    function animate(ts) {
+      if (!start) start = ts;
+      let p = (ts - start) / AD_DURATION;
+      if (p > 1) p = 1;
+
+      bar.style.width = (p * 100) + "%";
+
+      if (p < 1) {
+        adFrame = requestAnimationFrame(animate);
+      } else {
+        status.textContent = "加载完成，可点击“跳过”或“了解一下”";
+        skipBtn.disabled = false;
+      }
+    }
+
+    adFrame = requestAnimationFrame(animate);
+  }
+
+  function closeAd(runAfterAction = true) {
+    const modal = document.getElementById("adModal");
+    modal.classList.remove("show");
+    cancelAnimationFrame(adFrame);
+
+    if (runAfterAction && typeof adAfterAction === "function") {
+      const fn = adAfterAction;
+      adAfterAction = null;
+      fn();
+    } else {
+      adAfterAction = null;
+    }
+  }
+
+  function goShop() {
+    window.open(SHOP_URL, "_blank");
+  }
+
+  function closeIncompleteModal() {
+    const modal = document.getElementById("incompleteModal");
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  function showIncompleteModal(incomplete) {
+    const modal = document.getElementById("incompleteModal");
+    const summary = document.getElementById("incompleteSummary");
+    const list = document.getElementById("incompleteList");
+    const maxShow = 8;
+    const nums = incomplete.map(item => item.index);
+    const preview = nums.slice(0, maxShow).join("、");
+    const suffix = nums.length > maxShow ? " 等题" : " 题";
+    summary.textContent = `还有 ${incomplete.length} 题未完成：第 ${preview}${suffix}`;
+
+    list.innerHTML = "";
+    incomplete.slice(0, maxShow).forEach(item => {
+      const row = document.createElement("div");
+      row.className = "notice-item";
+
+      const no = document.createElement("div");
+      no.className = "notice-item-no";
+      no.textContent = `第 ${item.index} 题`;
+
+      const txt = document.createElement("div");
+      txt.className = "notice-item-text";
+      txt.textContent = item.q.text;
+
+      row.appendChild(no);
+      row.appendChild(txt);
+      list.appendChild(row);
+    });
+
+    if (incomplete.length > maxShow) {
+      const tail = document.createElement("div");
+      tail.className = "notice-text";
+      tail.textContent = `其余 ${incomplete.length - maxShow} 题可滚动页面继续补全。`;
+      list.appendChild(tail);
+    }
+
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function focusFirstIncomplete() {
+    if (!pendingIncomplete.length) return;
+    const first = questionList.children[pendingIncomplete[0].index - 1];
+    if (first) {
+      first.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  document.getElementById("adSkipBtn").addEventListener("click", () => {
+    if (document.getElementById("adSkipBtn").disabled) return;
+    closeAd(true);
+  });
+
+  document.getElementById("adGoBtn").addEventListener("click", () => {
+    if (document.getElementById("adGoBtn").disabled) return;
+    goShop();
+  });
+
+  document.getElementById("incompleteCloseBtn").addEventListener("click", () => {
+    closeIncompleteModal();
+  });
+
+  document.getElementById("incompleteGoBtn").addEventListener("click", () => {
+    closeIncompleteModal();
+    focusFirstIncomplete();
+  });
+
+  document.getElementById("incompleteModal").addEventListener("click", (e) => {
+    if (e.target.id === "incompleteModal") {
+      closeIncompleteModal();
+    }
+  });
+
+  document.getElementById("startBtn").addEventListener("click", () => {
+    showAdWithProgress(() => startTest(false), "bank");
+  });
+
+  document.getElementById("submitBtn").addEventListener("click", () => {
+    const incomplete = getIncompleteQuestions();
+    if (incomplete.length > 0) {
+      pendingIncomplete = incomplete;
+      showIncompleteModal(incomplete);
+      return;
+    }
+    showAdWithProgress(() => renderResult(), "result");
+  });
+
+  window.addEventListener("load", () => {
+    const box = document.querySelector(".result-actions");
+    if (!box) return;
+
+    const ad = document.createElement("div");
+    ad.className = "card";
+    ad.style.marginTop = "18px";
+    ad.style.padding = "18px";
+    ad.innerHTML = `
+      <div style="font-size:18px;font-weight:800;color:#4d6a53;margin-bottom:10px;">
+        🔥 ChatGPT 福利专区
+      </div>
+      <div style="line-height:1.9;color:#304034;">
+        ChatGPT Plus 企业内部渠道 20/月<br>
+        Plus共享号 23元<br>
+        GPT Plus 一年200<br>
+        5x Pro 月卡200 ｜ 20x Pro 月卡279<br>
+        Gork / Gemini 紧缺资源
+      </div>
+      <div style="margin-top:10px;font-weight:700;color:#4d6a53;">
+        apple.shbs.club
+      </div>
+    `;
+    box.parentNode.appendChild(ad);
+  });
+</script>
 </body>
 </html>
